@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report</title>
+    
+    <!-- Configurações do App direto no código -->
+    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Report%22,%22short_name%22:%22Report%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23f4f6f9%22,%22theme_color%22:%22%231e3c72%22}">
+    <meta name="theme-color" content="#1e3c72">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .screen { width: 100%; max-width: 450px; min-height: 100vh; background: white; padding: 25px; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        #screen-home { position: relative; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; }
+        .logo-container { margin-bottom: 50px; }
+        .logo { font-size: 3.5rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #00ffff, #ffffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .tagline { font-size: 1rem; opacity: 0.8; margin-top: 10px; }
+        .footer-home { position: absolute; bottom: 15px; right: 25px; font-size: 0.75rem; opacity: 0.7; color: #ffffff; font-weight: 500; }
+        #screen-app { display: none; background-color: #f0f4f8; }
+        .header-app { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; text-align: center; }
+        .header-app h2 { font-size: 1.5rem; color: #1e3c72; letter-spacing: 0.5px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group.centered { text-align: center; margin-top: 25px; margin-bottom: 25px; }
+        label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600; color: #555; }
+        .label-centered { font-size: 1.1rem; font-weight: 700; color: #1e3c72; margin-bottom: 12px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1.5px solid #ced4da; border-radius: 8px; font-size: 1rem; background-color: #f8f9fa; transition: all 0.3s; }
+        input:focus, select:focus, textarea:focus { border-color: #2a5298; background-color: #fff; outline: none; }
+        textarea { resize: none; height: 100px; }
+        .camera-box { background-color: #f8f9fa; border: 2px dashed #ced4da; border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px; }
+        .preview-container { position: relative; width: 100%; margin-top: 10px; display: none; }
+        img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 6px; display: block; }
+        button { width: 100%; padding: 15px; font-size: 1rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.1s, opacity 0.2s; box-sizing: border-box; }
+        button:active { transform: scale(0.98); }
+        .btn-primary { background-color: #ffffff; color: #1e3c72; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .btn-camera { background-color: #6c757d; color: white; }
+        .btn-whatsapp-contact { background-color: #007AFF; color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3); }
+        .btn-close { background-color: #dc3545; color: white; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="screen-home" class="screen">
+        <div class="logo-container">
+            <h1 class="logo">Report</h1>
+            <p class="tagline">Gerenciador de atendimento</p>
+        </div>
+        <button class="btn-primary" onclick="changeScreen('app')">Iniciar</button>
+        <div class="footer-home">Desenvolvido por Rodrigo Silveira</div>
+    </div>
+
+    <div id="screen-app" class="screen">
+        <div class="header-app"><h2>NOVA OCORRÊNCIA</h2></div>
+        <div class="form-group">
+            <label for="tipo">Tipo de Demanda</label>
+            <select id="tipo">
+                <option value="Solicitação">Solicitação</option>
+                <option value="Reclamação">Reclamação</option>
+                <option value="Elogio">Elogio</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="nome">Nome do Cliente *</label>
+            <input type="text" id="nome" placeholder="Digite o nome completo">
+        </div>
+        <div class="form-group">
+            <label for="telefone">Telefone (Opcional)</label>
+            <input type="tel" id="telefone" placeholder="Ex: (00) 00000-0000">
+        </div>
+        <div class="form-group">
+            <label for="retorno">O cliente deseja retorno?</label>
+            <select id="retorno">
+                <option value="Sim">Sim</option>
+                <option value="Não">Não</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="demanda">Descrição da Demanda *</label>
+            <textarea id="demanda" placeholder="Descreva detalhadamente o ocorrido..."></textarea>
+        </div>
+        <div class="camera-box">
+            <button type="button" id="btn-camera" class="btn-camera" onclick="controlCamera()">Capturar Imagem (Opcional)</button>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleCameraInput(event)">
+            <div id="preview-container" class="preview-container"><img id="preview" alt="Foto capturada"></div>
+        </div>
+        <div class="form-group centered">
+            <div class="label-centered">Número destino</div>
+            <button type="button" class="btn-whatsapp-contact" onclick="sendReport()">Escolher contato</button>
+        </div>
+        <button class="btn-close" onclick="closeApplication()">Encerrar Aplicação</button>
+    </div>
+
+    <script>
+        let fotoBase64 = null;
+        function changeScreen(screen) {
+            if (screen === 'app') {
+                document.getElementById('screen-home').style.display = 'none';
+                document.getElementById('screen-app').style.display = 'flex';
+            } else {
+                document.getElementById('screen-home').style.display = 'flex';
+                document.getElementById('screen-app').style.display = 'none';
+                resetForm();
+            }
+        }
+        function controlCamera() { document.getElementById('camera-input').click(); }
+        function handleCameraInput(event) {
+            const arquivo = event.target.files[0];
+            if (!arquivo) return;
+            const leitor = new FileReader();
+            leitor.onload = function(e) {
+                fotoBase64 = e.target.result;
+                const container = document.getElementById('preview-container');
+                const preview = document.getElementById('preview');
+                const btn = document.getElementById('btn-camera');
+                preview.src = fotoBase64;
+                container.style.display = 'block';
+                btn.innerText = "Refazer Foto";
+                btn.style.backgroundColor = "#ffc107";
+                btn.style.color = "#000";
+            };
+            leitor.readAsDataURL(arquivo);
+        }
+        function base64ToInterfaceFile(dataurl, filename) {
+            let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+            return new File([u8arr], filename, {type:mime});
+        }
+        function generateReportPDF(data) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            const corPrimaria = [30, 60, 114]; const corCinzaEscuro = [51, 51, 51]; const corLinha = [226, 232, 240];
+            doc.setFillColor(...corPrimaria); doc.rect(0, 0, 210, 35, 'F');
+            doc.setTextColor(255, 255, 255); doc.setFont("Helvetica", "bold"); doc.setFontSize(24); doc.text("REPORT", 20, 23);
+            doc.setFont("Helvetica", "normal"); doc.setFontSize(10); doc.text("Gerenciador de Atendimento", 20, 29);
+            doc.setFontSize(9); doc.text(`Emissão: ${data.dataHora}`, 145, 23);
+            doc.setDrawColor(...corLinha); doc.setLineWidth(0.5); doc.line(20, 48, 190, 48);
+            doc.setTextColor(...corCinzaEscuro); doc.setFontSize(11);
+            let currentY = 58;
+            const printLine = (label, value) => {
+                doc.setFont("Helvetica", "bold"); doc.text(label, 20, currentY);
+                doc.setFont("Helvetica", "normal"); doc.text(String(value), 60, currentY);
+                currentY += 10;
+            };
+            printLine("Tipo de Demanda:", data.tipo);
+            printLine("Cliente:", data.nome);
+            printLine("Telefone:", data.telefone);
+            printLine("Deseja Retorno:", data.retorno);
+            currentY += 2; doc.line(20, currentY, 190, currentY); currentY += 10;
+            doc.setFont("Helvetica", "bold"); doc.text("Descrição da Demanda:", 20, currentY); currentY += 7;
+            doc.setFont("Helvetica", "normal");
+            const linhasDemanda = doc.splitTextToSize(data.demanda, 170); doc.text(linhasDemanda, 20, currentY);
+            doc.setDrawColor(...corLinha); doc.line(20, 275, 190, 275);
+            doc.setFont("Helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
+            doc.text("Documento oficial gerado via report.app", 20, 282);
+            doc.text("Desenvolvido por Rodrigo Silveira", 135, 282);
+            return doc.output('arraybuffer');
+        }
+        async function sendReport() {
+            const tipo = document.getElementById('tipo').value;
+            const nome = document.getElementById('nome').value.trim();
+            const telefone = document.getElementById('telefone').value.trim() || "Não informado";
+            const retorno = document.getElementById('retorno').value;
+            const demanda = document.getElementById('demanda').value.trim();
+            if (!nome || !demanda) { alert("Por favor, preencha o Nome e a Descrição da Demanda!"); return; }
+            const agora = new Date(); const dataHora = agora.toLocaleString('pt-BR');
+            let textoMensagem = `*🔔 NOVO RELATÓRIO - REPORT*\n📅 *Data/Hora:* ${dataHora}\n👤 *Cliente:* ${nome}\n📁 *Tipo:* ${tipo}\n\nSegue em anexo o arquivo oficial gerado pelo sistema.`;
+            try {
+                let arquivosParaCompartilhar = [];
+                if (fotoBase64) {
+                    const arquivoImagem = base64ToInterfaceFile(fotoBase64, `evidencia_${agora.getTime()}.png`);
+                    arquivosParaCompartilhar.push(arquivoImagem);
+                } else {
+                    const pdfDadosBrutos = generateReportPDF({ tipo, nome, telefone, retorno, demanda, dataHora });
+                    const arquivoPDF = new File([pdfDadosBrutos], `Relatorio_${agora.getTime()}.pdf`, { type: 'application/pdf' });
+                    arquivosParaCompartilhar.push(arquivoPDF);
+                }
+                if (navigator.canShare && navigator.canShare({ files: arquivosParaCompartilhar })) {
+                    await navigator.share({ files: arquivosParaCompartilhar, text: textoMensagem, title: 'Relatório de Ocorrência' });
+                    resetForm(); changeScreen('home');
+                } else { alert("Dispositivo sem suporte para compartilhamento."); }
+            } catch (erro) { console.log("Cancelado."); }
+        }
+        function resetForm() {
+            document.getElementById('nome').value = ''; document.getElementById('telefone').value = ''; document.getElementById('demanda').value = '';
+            document.getElementById('tipo').selectedIndex = 0; document.getElementById('retorno').selectedIndex = 0;
+            document.getElementById('camera-input').value = ''; fotoBase64 = null;
+            document.getElementById('preview-container').style.display = 'none';
+            document.getElementById('btn-camera').innerText = "Capturar Imagem (Opcional)";
+            document.getElementById('btn-camera').style.backgroundColor = "#6c757d"; document.getElementById('btn-camera').style.color = "#fff";
+        }
+        function closeApplication() { if (confirm("Deseja realmente fechar o relatório?")) { changeScreen('home'); } }
+
+        // Ativação Automática do Modo App/Offline
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:application/javascript;base64,' + btoa(`
+                self.addEventListener('fetch', event => {
+                    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+                });
+            `));
+        }
+    </script>
+</body>
+              </html>
+
